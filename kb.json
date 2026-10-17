@@ -15,14 +15,18 @@
     "other_devices_wifi_ok": "Do other devices (phone etc.) connect to the same WiFi fine?",
     "other_devices_also_fail": "Do other devices ALSO fail to connect to that WiFi?",
     "battery_drains_fast": "Does the battery drain much faster than it used to?",
-    "battery_old": "Is the battery more than 3 years old?"
+    "battery_old": "Is the battery more than 3 years old?",
+    "no_sound": "Is there no sound from the laptop speakers?",
+    "muted_or_volume_zero": "Is the volume muted or set to zero?",
+    "headphones_work": "Does sound work through headphones?"
   },
   "diagnoses": [
     "power_supply_issue", "battery_fault", "display_panel_fault",
     "graphics_or_motherboard_fault", "storage_bottleneck", "memory_shortage",
     "overheating_issue", "wifi_switched_off", "wifi_adapter_or_driver_issue",
     "router_or_isp_issue",    "router_or_isp_issue",
-    "battery_worn_out"
+    "battery_worn_out",    "volume_muted",
+    "speaker_fault"
   ],
   "descriptions": {
     "power_supply_issue": "Power supply problem (charger or charging port)",
@@ -46,7 +50,11 @@
     "fix_update_wifi_driver": "FIX: Update or reinstall the WiFi driver",
     "fix_restart_router_call_isp": "FIX: Restart the router; call your internet provider",
     "battery_worn_out": "Battery is worn out from age",
-    "fix_replace_old_battery": "FIX: Replace the battery with a new one"
+    "fix_replace_old_battery": "FIX: Replace the battery with a new one",
+    "volume_muted": "Volume is muted or set too low",
+    "speaker_fault": "Speaker hardware fault",
+    "fix_unmute_volume": "FIX: Unmute the volume and raise it",
+    "fix_service_speakers": "FIX: Get the speakers repaired or use headphones"
   },
   "rules": [
     {"id": "R1",  "if": ["no_power", "charger_light_off"], "then": "power_supply_issue"},
@@ -70,6 +78,10 @@
     {"id": "R19", "if": ["wifi_adapter_or_driver_issue"], "then": "fix_update_wifi_driver"},
     {"id": "R20", "if": ["router_or_isp_issue"], "then": "fix_restart_router_call_isp"},
     {"id": "R21", "if": ["battery_drains_fast", "battery_old"], "then": "battery_worn_out"},
-    {"id": "R22", "if": ["battery_worn_out"], "then": "fix_replace_old_battery"}
+    {"id": "R22", "if": ["battery_worn_out"], "then": "fix_replace_old_battery"},
+    {"id": "R23", "if": ["no_sound", "muted_or_volume_zero"], "then": "volume_muted"},
+    {"id": "R24", "if": ["no_sound", "headphones_work"], "then": "speaker_fault"},
+    {"id": "R25", "if": ["volume_muted"], "then": "fix_unmute_volume"},
+    {"id": "R26", "if": ["speaker_fault"], "then": "fix_service_speakers"}
   ]
 }
