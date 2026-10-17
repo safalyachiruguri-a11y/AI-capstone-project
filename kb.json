@@ -18,15 +18,18 @@
     "battery_old": "Is the battery more than 3 years old?",
     "no_sound": "Is there no sound from the laptop speakers?",
     "muted_or_volume_zero": "Is the volume muted or set to zero?",
-    "headphones_work": "Does sound work through headphones?"
+    "headphones_work": "Does sound work through headphones?",
+    "usb_not_detected": "Does the laptop fail to detect devices plugged into a USB port?",
+    "other_usb_port_works": "Does the same device work in a different USB port?",
+    "device_fails_on_other_pc": "Does the device also fail on another computer?"
   },
   "diagnoses": [
     "power_supply_issue", "battery_fault", "display_panel_fault",
     "graphics_or_motherboard_fault", "storage_bottleneck", "memory_shortage",
     "overheating_issue", "wifi_switched_off", "wifi_adapter_or_driver_issue",
-    "router_or_isp_issue",    "router_or_isp_issue",
+        "router_or_isp_issue",
     "battery_worn_out",    "volume_muted",
-    "speaker_fault"
+    "speaker_fault","usb_port_fault","usb_device_fault"
   ],
   "descriptions": {
     "power_supply_issue": "Power supply problem (charger or charging port)",
@@ -54,7 +57,11 @@
     "volume_muted": "Volume is muted or set too low",
     "speaker_fault": "Speaker hardware fault",
     "fix_unmute_volume": "FIX: Unmute the volume and raise it",
-    "fix_service_speakers": "FIX: Get the speakers repaired or use headphones"
+    "fix_service_speakers": "FIX: Get the speakers repaired or use headphones",
+    "usb_port_fault": "Faulty USB port (the device works in another port)",
+    "usb_device_fault": "The USB device itself is faulty",
+    "fix_use_other_port_or_repair": "FIX: Use another port or get the port repaired",
+    "fix_replace_usb_device": "FIX: Try a different device or replace this one"
   },
   "rules": [
     {"id": "R1",  "if": ["no_power", "charger_light_off"], "then": "power_supply_issue"},
@@ -82,6 +89,10 @@
     {"id": "R23", "if": ["no_sound", "muted_or_volume_zero"], "then": "volume_muted"},
     {"id": "R24", "if": ["no_sound", "headphones_work"], "then": "speaker_fault"},
     {"id": "R25", "if": ["volume_muted"], "then": "fix_unmute_volume"},
-    {"id": "R26", "if": ["speaker_fault"], "then": "fix_service_speakers"}
+    {"id": "R26", "if": ["speaker_fault"], "then": "fix_service_speakers"},
+    {"id": "R27", "if": ["usb_not_detected","other_usb_port_works"], "then": "usb_port_fault"},
+    {"id": "R28", "if": ["usb_not_detected","device_fails_on_other_pc"], "then": "usb_device_fault"},
+    {"id": "R29", "if": ["usb_port_fault"], "then": "fix_use_other_port_or_repair"},
+    {"id": "R30", "if": ["usb_device_fault"], "then": "fix_replace_usb_device"}
   ]
 }

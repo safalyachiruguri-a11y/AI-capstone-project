@@ -20,6 +20,8 @@ TESTS = [
     ("Battery old and draining",       {"battery_drains_fast", "battery_old"}, "battery_worn_out"),
     ("No sound, headphones work",      {"no_sound", "headphones_work"}, "speaker_fault"),
     ("No sound, volume muted",         {"no_sound", "muted_or_volume_zero"}, "volume_muted"),
+    ("USB port faulty",                {"usb_not_detected", "other_usb_port_works"}, "usb_port_fault"),
+    ("USB device faulty",              {"usb_not_detected", "device_fails_on_other_pc"}, "usb_device_fault"),
 ]
 
 print(f"{'Test case':32} {'Fwd ok':7} {'Bwd ok':7} {'Fwd chk':8} {'Bwd chk':8}")
