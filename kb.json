@@ -13,13 +13,16 @@
     "wifi_not_connecting": "Does this laptop fail to connect to WiFi?",
     "airplane_mode_on": "Is airplane mode ON or the WiFi switch turned off?",
     "other_devices_wifi_ok": "Do other devices (phone etc.) connect to the same WiFi fine?",
-    "other_devices_also_fail": "Do other devices ALSO fail to connect to that WiFi?"
+    "other_devices_also_fail": "Do other devices ALSO fail to connect to that WiFi?",
+    "battery_drains_fast": "Does the battery drain much faster than it used to?",
+    "battery_old": "Is the battery more than 3 years old?"
   },
   "diagnoses": [
     "power_supply_issue", "battery_fault", "display_panel_fault",
     "graphics_or_motherboard_fault", "storage_bottleneck", "memory_shortage",
     "overheating_issue", "wifi_switched_off", "wifi_adapter_or_driver_issue",
-    "router_or_isp_issue"
+    "router_or_isp_issue",    "router_or_isp_issue",
+    "battery_worn_out"
   ],
   "descriptions": {
     "power_supply_issue": "Power supply problem (charger or charging port)",
@@ -41,7 +44,9 @@
     "fix_clean_fan_repaste": "FIX: Clean the fan and vents, replace thermal paste",
     "fix_turn_off_airplane_mode": "FIX: Turn off airplane mode and switch WiFi on",
     "fix_update_wifi_driver": "FIX: Update or reinstall the WiFi driver",
-    "fix_restart_router_call_isp": "FIX: Restart the router; call your internet provider"
+    "fix_restart_router_call_isp": "FIX: Restart the router; call your internet provider",
+    "battery_worn_out": "Battery is worn out from age",
+    "fix_replace_old_battery": "FIX: Replace the battery with a new one"
   },
   "rules": [
     {"id": "R1",  "if": ["no_power", "charger_light_off"], "then": "power_supply_issue"},
@@ -63,6 +68,8 @@
     {"id": "R17", "if": ["overheating_issue"], "then": "fix_clean_fan_repaste"},
     {"id": "R18", "if": ["wifi_switched_off"], "then": "fix_turn_off_airplane_mode"},
     {"id": "R19", "if": ["wifi_adapter_or_driver_issue"], "then": "fix_update_wifi_driver"},
-    {"id": "R20", "if": ["router_or_isp_issue"], "then": "fix_restart_router_call_isp"}
+    {"id": "R20", "if": ["router_or_isp_issue"], "then": "fix_restart_router_call_isp"},
+    {"id": "R21", "if": ["battery_drains_fast", "battery_old"], "then": "battery_worn_out"},
+    {"id": "R22", "if": ["battery_worn_out"], "then": "fix_replace_old_battery"}
   ]
 }
