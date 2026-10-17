@@ -17,6 +17,9 @@ TESTS = [
     ("No WiFi, airplane mode",         {"wifi_not_connecting", "airplane_mode_on"}, "wifi_switched_off"),
     ("No WiFi, phone works",           {"wifi_not_connecting", "other_devices_wifi_ok"}, "wifi_adapter_or_driver_issue"),
     ("No WiFi, phone fails too",       {"wifi_not_connecting", "other_devices_also_fail"}, "router_or_isp_issue"),
+    ("Battery old and draining",       {"battery_drains_fast", "battery_old"}, "battery_worn_out"),
+    ("No sound, headphones work",      {"no_sound", "headphones_work"}, "speaker_fault"),
+    ("No sound, volume muted",         {"no_sound", "muted_or_volume_zero"}, "volume_muted"),
 ]
 
 print(f"{'Test case':32} {'Fwd ok':7} {'Bwd ok':7} {'Fwd chk':8} {'Bwd chk':8}")
