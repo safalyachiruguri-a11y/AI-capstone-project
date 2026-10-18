@@ -1,28 +1,27 @@
 """Fair comparison of forward vs backward chaining (for the Results section).
 
-For every diagnosis in the knowledge base, we build a test case automatically:
-the user's 'yes' answers are exactly the conditions of the rule that proves it.
-All other questions are answered 'no'.
+For every diagnosis, a test case is built automatically: the user's 'yes' answers
+are exactly the conditions of the rule that proves it; everything else is 'no'.
+The user has already chosen the appliance, so only that appliance's questions
+and diagnoses are in play.
 
-Three measurements per case:
-  Forward           - asks ALL questions, then fires rules.
-  Backward (known)  - the goal is known, so it checks only that one problem.
-  Backward (unknown)- the goal is NOT known, so it tries every diagnosis.
+  Forward           - asks ALL of the appliance's questions, then fires rules.
+  Backward (known)  - the problem is known, so it checks only that one diagnosis.
+  Backward (unknown)- the problem is NOT known, so it tries every diagnosis
+                      of the appliance.
 """
-import time
 from engine import load_kb, forward_chain, backward_chain
 
 kb = load_kb("kb.json")
 rules = kb["rules"]
 questions = kb["questions"]
-diagnoses = kb["diagnoses"]
 
 
-def make_ask(answers, counter, cache):
+def make_ask(answers, app_questions, counter, cache):
     """Pretend to be the user: say 'yes' only to the facts in `answers`."""
     def ask(fact):
-        if fact not in questions:
-            return False                     # derived facts are never asked
+        if fact not in app_questions:
+            return False                     # derived or other-appliance fact
         if fact not in cache:
             cache[fact] = fact in answers
             counter["q"] += 1                # count each new question once
@@ -30,33 +29,30 @@ def make_ask(answers, counter, cache):
     return ask
 
 
-# One test case per diagnosis: its answers are the conditions of its rule
 cases = []
-for goal in diagnoses:
-    for rule in rules:
-        if rule["then"] == goal:
-            cases.append((goal, set(rule["if"])))
-            break
+for app_name, info in kb["appliances"].items():
+    for goal in info["diagnoses"]:
+        rule = next(r for r in rules if r["then"] == goal)
+        cases.append((app_name, info, goal, set(rule["if"])))
 
-print(f"{'Diagnosis':32} {'Fwd Q':>6} {'BwdK Q':>7} {'BwdU Q':>7}"
-      f" {'Fwd chk':>8} {'BwdK chk':>9} {'BwdU chk':>9} {'OK':>4}")
+print(f"{'Appliance':16} {'Diagnosis':30} {'FwdQ':>5} {'BwdKQ':>6} {'BwdUQ':>6}"
+      f" {'Fwd chk':>8} {'BwdK chk':>9} {'BwdU chk':>9} {'OK':>5}")
 
-totals = [0, 0, 0, 0, 0, 0]
-for goal, answers in cases:
-    # Forward chaining: all questions are asked first
+totals = [0] * 6
+for app_name, info, goal, answers in cases:
+    app_q, app_d = info["questions"], info["diagnoses"]
+
     all_facts, fired, f_checks = forward_chain(rules, answers)
-    f_q = len(questions)
+    f_q = len(app_q)
 
-    # Backward chaining, goal known
     counter, cache = {"q": 0}, {}
-    ok_k, st_k = backward_chain(goal, rules, set(), make_ask(answers, counter, cache))
+    ok_k, st_k = backward_chain(goal, rules, set(), make_ask(answers, app_q, counter, cache))
     k_q, k_checks = counter["q"], st_k["checks"]
 
-    # Backward chaining, goal unknown: try every diagnosis, share the answers
     counter, cache, facts = {"q": 0}, {}, set()
-    ask = make_ask(answers, counter, cache)
+    ask = make_ask(answers, app_q, counter, cache)
     found, u_checks = [], 0
-    for g in diagnoses:
+    for g in app_d:
         ok, st = backward_chain(g, rules, facts, ask)
         u_checks += st["checks"]
         if ok:
@@ -66,12 +62,12 @@ for goal, answers in cases:
     correct = (goal in all_facts) and ok_k and (goal in found)
     row = [f_q, k_q, u_q, f_checks, k_checks, u_checks]
     totals = [t + v for t, v in zip(totals, row)]
-    print(f"{goal:32} {f_q:>6} {k_q:>7} {u_q:>7} {f_checks:>8} {k_checks:>9}"
-          f" {u_checks:>9} {str(correct):>4}")
+    print(f"{app_name:16} {goal:30} {f_q:>5} {k_q:>6} {u_q:>6} {f_checks:>8}"
+          f" {k_checks:>9} {u_checks:>9} {str(correct):>5}")
 
 n = len(cases)
-print("-" * 92)
-print(f"{'AVERAGE':32} {totals[0]/n:>6.1f} {totals[1]/n:>7.1f} {totals[2]/n:>7.1f}"
+print("-" * 106)
+print(f"{'AVERAGE':47} {totals[0]/n:>5.1f} {totals[1]/n:>6.1f} {totals[2]/n:>6.1f}"
       f" {totals[3]/n:>8.1f} {totals[4]/n:>9.1f} {totals[5]/n:>9.1f}")
 print("\nQ = questions asked, chk = rule/goal checks.")
-print("BwdK = backward, goal known. BwdU = backward, goal unknown (all diagnoses tried).")
+print("BwdK = backward, problem known. BwdU = backward, problem unknown (all of the appliance's diagnoses tried).")

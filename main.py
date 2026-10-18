@@ -1,4 +1,4 @@
-"""Laptop Fault Diagnosis - knowledge-based agent (command-line version)."""
+"""Household Appliance Fault Diagnosis - knowledge-based agent (command-line)."""
 from engine import load_kb, forward_chain, backward_chain
 
 
@@ -10,14 +10,22 @@ def yes_no(text):
         print("Please type y or n.")
 
 
-def show_rule(rule, desc):
-    conds = " AND ".join(rule["if"])
-    print(f"  {rule['id']}: IF {conds} THEN {rule['then']}")
+def choose(title, options):
+    """Show a numbered menu and return the chosen index."""
+    print(title)
+    for i, option in enumerate(options, 1):
+        print(f"  {i}. {option}")
+    while True:
+        s = input("Number: ").strip()
+        if s.isdigit() and 1 <= int(s) <= len(options):
+            return int(s) - 1
+        print("Please type a number from the list.")
 
 
-def run_forward(kb):
-    print("\n--- Forward chaining: answer all questions, then I reason ---")
-    facts = {f for f, q in kb["questions"].items() if yes_no(q)}
+def run_forward(kb, appliance):
+    print(f"\n--- Forward chaining: answer the {appliance} questions, then I reason ---")
+    asked = kb["appliances"][appliance]["questions"]
+    facts = {f for f in asked if yes_no(kb["questions"][f])}
     all_facts, fired, checks = forward_chain(kb["rules"], facts)
 
     results = [f for f in all_facts if f in kb["descriptions"]]
@@ -30,17 +38,17 @@ def run_forward(kb):
     print("\nWhy (rules that fired):")
     by_id = {r["id"]: r for r in kb["rules"]}
     for rid in fired:
-        show_rule(by_id[rid], kb["descriptions"])
-    print(f"\nRules fired: {len(fired)} | Rule checks: {checks}")
+        r = by_id[rid]
+        print(f"  {rid}: IF {' AND '.join(r['if'])} THEN {r['then']}")
+    print(f"\nQuestions asked: {len(asked)} | Rules fired: {len(fired)} | Rule checks: {checks}")
 
 
-def run_backward(kb):
-    print("\n--- Backward chaining: pick a problem, I check only what I need ---")
-    goals = kb["diagnoses"]
-    for i, g in enumerate(goals, 1):
-        print(f"  {i}. {kb['descriptions'][g]}")
-    choice = int(input("Which problem do you want to check? Number: ")) - 1
-    goal = goals[choice]
+def run_backward(kb, appliance):
+    print(f"\n--- Backward chaining: pick a {appliance} problem, I check only what I need ---")
+    goals = kb["appliances"][appliance]["diagnoses"]
+    pick = choose("Which problem do you want to check?",
+                  [kb["descriptions"][g] for g in goals])
+    goal = goals[pick]
 
     facts, asked = set(), {}
 
@@ -62,12 +70,15 @@ def run_backward(kb):
 
 def main():
     kb = load_kb("kb.json")
-    print("=== Laptop Fault Diagnosis Agent ===")
-    mode = input("1 = forward chaining, 2 = backward chaining: ").strip()
-    if mode == "1":
-        run_forward(kb)
+    print("=== Household Appliance Fault Diagnosis Agent ===")
+    names = list(kb["appliances"])
+    appliance = names[choose("\nWhich appliance has the problem?", names)]
+    mode = choose("\nWhich reasoning method?",
+                  ["Forward chaining", "Backward chaining"])
+    if mode == 0:
+        run_forward(kb, appliance)
     else:
-        run_backward(kb)
+        run_backward(kb, appliance)
 
 
 if __name__ == "__main__":
