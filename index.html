@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Appliance Fault Diagnosis Agent</title>
+<style>
+:root{--bg:#F7F5F0;--card:#FFFFFF;--ink:#1B1F2A;--muted:#4A5160;--line:#D9D6CC;--navy:#14213D;--accent:#1F7A8C;--sel:#1F7A8C;--sym:#E3F0F9;--diag:#FFE9CC;--fix:#D9EEDB;--adv:#FADBD8;--int:#EDE7F6;--edge:#7A8499}
+@media (prefers-color-scheme: dark){:root{--bg:#10151F;--card:#1A2232;--ink:#EDEFF4;--muted:#AAB3C5;--line:#2E3950;--navy:#0B1220;--accent:#5EC4D8;--sel:#1B6B7B;--sym:#1F3A52;--diag:#4A3418;--fix:#1F4026;--adv:#4D2424;--int:#33284F;--edge:#8B96AD}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI",system-ui,Arial,sans-serif;line-height:1.45}
+header{background:var(--navy);color:#F4F1EA;padding:22px 28px}
+header h1{margin:0;font-size:24px}
+header p{margin:4px 0 0;color:#C9D3E6;font-size:14px}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+h2{margin:0 0 10px;font-size:17px;color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:end}
+.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
+select{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:230px}
+.modes{display:flex;gap:8px}
+.modes label{cursor:pointer}
+.modes input,.seg input{position:absolute;opacity:0}
+.modes span,.seg span{display:inline-block;padding:8px 16px;border:1px solid var(--line);border-radius:8px;background:var(--card);cursor:pointer;font-size:14px}
+.seg span{padding:5px 16px}
+.modes input:checked+span,.seg input:checked+span{background:var(--sel);color:#fff;border-color:var(--sel)}
+.modes input:focus-visible+span,.seg input:focus-visible+span,button:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button{font:inherit;font-weight:600;padding:9px 20px;border-radius:8px;border:0;background:var(--sel);color:#fff;cursor:pointer}
+button.alt{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.q{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.q:first-of-type{border-top:0}
+.seg{display:flex;gap:0;flex-shrink:0}
+.seg label:first-child span{border-radius:8px 0 0 8px}.seg label:last-child span{border-radius:0 8px 8px 0;border-left:0}
+.big{font-size:20px;margin:6px 0 14px}
+.actions{display:flex;gap:10px;margin-top:14px}
+.chips{display:flex;flex-direction:column;gap:8px;margin:6px 0 12px}
+.chip{padding:9px 14px;border-radius:8px;font-weight:600}
+.k-diag{background:var(--diag)}.k-fix{background:var(--fix)}.k-adv{background:var(--adv)}.k-sym{background:var(--sym)}.k-int{background:var(--int)}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 4px}
+.stat{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:14px}
+.stat b{font-size:18px;color:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;font-size:13px}
+.legend span{padding:3px 10px;border-radius:6px}
+.graphwrap{overflow:hidden;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.graph{position:relative}
+.node{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px 8px;border-radius:8px;border:1.5px solid var(--edge);font-size:12.5px;line-height:1.25;overflow:hidden}
+.edge{fill:none;stroke:var(--edge);stroke-width:1.6}
+.arrow{fill:var(--edge)}
+.chipbox{fill:var(--card);stroke:var(--line)}
+.chiptext{fill:var(--ink);font-size:11px;font-weight:700;text-anchor:middle;dominant-baseline:central}
+.rules{margin:8px 0 0;padding:0;list-style:none;font-family:Consolas,monospace;font-size:13px}
+.rules li{padding:3px 0}
+.muted{color:var(--muted);font-size:14px}
+.log{margin:10px 0 0;padding-left:20px;font-size:14px;color:var(--muted)}
+.hide{display:none!important}
+</style>
+</head>
+<body>
+<header>
+<h1>Household Appliance Fault Diagnosis Agent</h1>
+<p>Knowledge-based agent using propositional logic. Forward and backward chaining over the same rule base.</p>
+</header>
+<main>
+<section class="card">
+<h2>1. Choose the appliance and the reasoning method</h2>
+<div class="row">
+<label class="f">Appliance<select id="app"></select></label>
+<div class="f">Reasoning method
+<div class="modes">
+<label><input type="radio" name="mode" value="forward" checked><span>Forward chaining</span></label>
+<label><input type="radio" name="mode" value="backward"><span>Backward chaining</span></label>
+</div></div>
+<label class="f" id="goalbox">Problem to check<select id="goal"></select></label>
+<button id="start">Start</button>
+</div>
+<p class="muted" id="hint"></p>
+</section>
+<section class="card hide" id="qcard"></section>
+<section class="card hide" id="result"></section>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let KB, S = {};
+
+const nice = id => KB.descriptions[id] || id.replace(/_/g, " ");
+
+async function post(url, body) {
+  const r = await fetch(url, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+function esc(t) {
+  return String(t).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+}
+
+async function init() {
+  KB = await (await fetch("/api/kb")).json();
+  $("#app").innerHTML = Object.keys(KB.appliances).map(n => `<option>${esc(n)}</option>`).join("");
+  $("#app").onchange = fillGoals;
+  document.querySelectorAll("input[name=mode]").forEach(r => r.onchange = updateMode);
+  $("#start").onclick = start;
+  fillGoals();
+  updateMode();
+}
+
+function mode() { return document.querySelector("input[name=mode]:checked").value; }
+
+function fillGoals() {
+  const app = $("#app").value;
+  $("#goal").innerHTML = KB.appliances[app].diagnoses.map(d => `<option value="${d}">${esc(nice(d))}</option>`).join("");
+}
+
+function updateMode() {
+  const fwd = mode() === "forward";
+  $("#goalbox").classList.toggle("hide", fwd);
+  $("#hint").textContent = fwd
+    ? "Forward chaining: you answer all the questions, then the agent derives every conclusion it can."
+    : "Backward chaining: pick one suspected problem, and the agent asks only the questions needed to prove or reject it.";
+}
+
+function reset() {
+  $("#qcard").classList.add("hide");
+  $("#result").classList.add("hide");
+}
+
+function start() {
+  reset();
+  S = {app: $("#app").value, answers: {}, goal: $("#goal").value};
+  if (mode() === "forward") forwardForm(); else step();
+}
+
+function forwardForm() {
+  const qs = KB.appliances[S.app].questions;
+  const rows = qs.map(q => `<div class="q"><span>${esc(q.text)}</span><div class="seg">
+    <label><input type="radio" name="q_${q.id}" value="1"><span>Yes</span></label>
+    <label><input type="radio" name="q_${q.id}" value="0" checked><span>No</span></label></div></div>`).join("");
+  const card = $("#qcard");
+  card.innerHTML = `<h2>2. Answer the ${esc(S.app)} questions</h2>${rows}
+    <div class="actions"><button id="go">Diagnose</button></div>`;
+  card.classList.remove("hide");
+  $("#go").onclick = async () => {
+    const yes = qs.filter(q => document.querySelector(`input[name=q_${q.id}]:checked`).value === "1").map(q => q.id);
+    const res = await post("/api/forward", {appliance: S.app, yes});
+    showResult(res, true);
+  };
+}
+
+async function step() {
+  const res = await post("/api/backward", {appliance: S.app, goal: S.goal, answers: S.answers});
+  if (res.status === "ask") {
+    const done = Object.entries(S.answers).map(([f, v]) => `<li>${esc(KB.questions[f])} <b>${v ? "Yes" : "No"}</b></li>`).join("");
+    const card = $("#qcard");
+    card.innerHTML = `<h2>2. Checking: ${esc(nice(S.goal))}</h2>
+      <p class="big">${esc(res.question)}</p>
+      <div class="actions"><button id="yes">Yes</button><button id="no" class="alt">No</button></div>
+      ${done ? `<ol class="log">${done}</ol>` : ""}`;
+    card.classList.remove("hide");
+    $("#yes").focus();
+    $("#yes").onclick = () => { S.answers[res.fact] = true; step(); };
+    $("#no").onclick = () => { S.answers[res.fact] = false; step(); };
+  } else {
+    $("#qcard").classList.add("hide");
+    showResult(res, false);
+  }
+}
+
+function kindOf(f, concl) {
+  if (f in concl) {
+    if (f.startsWith("fix_")) return "fix";
+    if (f.startsWith("advice_")) return "adv";
+    if (KB.allDiagnoses.includes(f)) return "diag";
+    return "int";
+  }
+  return "sym";
+}
+
+function drawGraph(fired) {
+  const concl = {};
+  fired.forEach(r => { if (!(r.then in concl)) concl[r.then] = r; });
+  const memo = {};
+  const depth = f => {
+    if (f in memo) return memo[f];
+    if (!(f in concl)) return (memo[f] = 0);
+    memo[f] = 0;
+    return (memo[f] = 1 + Math.max(...concl[f].if.map(depth)));
+  };
+  const order = [], seen = new Set();
+  const add = f => { if (!seen.has(f)) { seen.add(f); order.push(f); } };
+  fired.forEach(r => { r.if.forEach(add); add(r.then); });
+
+  const cols = {};
+  order.forEach(f => { (cols[depth(f)] = cols[depth(f)] || []).push(f); });
+  const W = 200, H = 56, GX = 80, GY = 14, PAD = 12;
+  const nCols = Math.max(...Object.keys(cols).map(Number)) + 1;
+  const maxRows = Math.max(...Object.values(cols).map(c => c.length));
+  const totalH = PAD * 2 + maxRows * (H + GY) - GY;
+  const totalW = PAD * 2 + nCols * W + (nCols - 1) * GX;
+
+  const pos = {};
+  Object.entries(cols).forEach(([d, list]) => {
+    const colH = list.length * (H + GY) - GY;
+    const off = (totalH - PAD * 2 - colH) / 2;
+    list.forEach((f, i) => { pos[f] = {x: PAD + d * (W + GX), y: PAD + off + i * (H + GY)}; });
+  });
+
+  let edges = "";
+  fired.forEach(r => r.if.forEach(c => {
+    const a = pos[c], b = pos[r.then];
+    const x1 = a.x + W, y1 = a.y + H / 2, x2 = b.x, y2 = b.y + H / 2, dx = (x2 - x1) / 2;
+    const cw = r.id.length * 8 + 12, t = 0.65, u = 1 - t;
+    const bx = u*u*u*x1 + 3*u*u*t*(x1 + dx) + 3*u*t*t*(x2 - dx) + t*t*t*x2;
+    const my = u*u*u*y1 + 3*u*u*t*y1 + 3*u*t*t*y2 + t*t*t*y2;
+    const mx = Math.min(bx, x2 - cw / 2 - 6);
+    edges += `<path class="edge" marker-end="url(#ah)" d="M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2 - 2},${y2}"/>
+      <rect class="chipbox" x="${mx - cw / 2}" y="${my - 10}" width="${cw}" height="20" rx="6"/>
+      <text class="chiptext" x="${mx}" y="${my}">${esc(r.id)}</text>`;
+  }));
+
+  const nodes = order.map(f => {
+    const p = pos[f], k = kindOf(f, concl);
+    const tip = k === "sym" && KB.questions[f] ? KB.questions[f] : f;
+    return `<div class="node k-${k}" title="${esc(tip)}" style="left:${p.x}px;top:${p.y}px;width:${W}px;height:${H}px">${esc(nice(f))}</div>`;
+  }).join("");
+
+  return `<div class="graphwrap"><div class="graph" style="width:${totalW}px;height:${totalH}px">
+    <svg width="${totalW}" height="${totalH}" style="position:absolute;left:0;top:0">
+      <defs><marker id="ah" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" class="arrow"/></marker></defs>
+      ${edges}</svg>${nodes}</div></div>`;
+}
+
+function fitGraph() {
+  document.querySelectorAll(".graphwrap").forEach(w => {
+    const g = w.firstElementChild;
+    const tw = parseFloat(g.style.width), th = parseFloat(g.style.height);
+    const sc = Math.min(1, (w.clientWidth - 2) / tw);
+    g.style.transformOrigin = "top left";
+    g.style.transform = `scale(${sc})`;
+    w.style.height = (th * sc + 2) + "px";
+  });
+}
+window.addEventListener("resize", fitGraph);
+
+function showResult(res, isForward) {
+  const box = $("#result");
+  const fired = res.fired;
+  const found = isForward ? res.conclusions.length > 0 : res.proven;
+  let head;
+  if (isForward) {
+    const chips = res.conclusions.map(f => `<div class="chip k-${kindOf(f, Object.fromEntries(fired.map(r => [r.then, r])))}">${esc(nice(f))}</div>`).join("");
+    head = found ? `<div class="chips">${chips}</div>`
+      : `<p class="big">No diagnosis found. The rule base has no rule for this combination of answers.</p>`;
+  } else {
+    head = found
+      ? `<div class="chips"><div class="chip k-diag">Yes, likely: ${esc(nice(S.goal))}</div></div>`
+      : `<p class="big">Not supported by your answers: ${esc(nice(S.goal))}</p>`;
+  }
+  const stats = isForward
+    ? `<div class="stat">Questions asked <b>${res.asked}</b></div><div class="stat">Rules fired <b>${fired.length}</b></div><div class="stat">Rule checks <b>${res.checks}</b></div>`
+    : `<div class="stat">Questions asked <b>${res.asked}</b></div><div class="stat">Rules used <b>${fired.length}</b></div><div class="stat">Goal checks <b>${res.checks}</b></div>`;
+  const legend = `<div class="legend"><span class="k-sym">Your answer</span><span class="k-diag">Diagnosis</span><span class="k-fix">Fix</span><span class="k-adv">Safety advice</span><span class="k-int">Internal step</span></div>`;
+  const rules = fired.map(r => `<li><b>${esc(r.id)}</b>: IF ${r.if.map(esc).join(" AND ")} THEN ${esc(r.then)}</li>`).join("");
+  box.innerHTML = `<h2>${isForward ? "3. Result" : "3. Result"}</h2>${head}
+    <div class="stats">${stats}</div>
+    ${fired.length ? `<h2 style="margin-top:16px">How the agent reached this</h2>
+      <p class="muted">Arrows show which facts were combined by which rule (the R-number on each arrow). Hover a blue box to see the question it came from.</p>
+      ${legend}${drawGraph(fired)}
+      <h2 style="margin-top:16px">Rules that fired</h2><ul class="rules">${rules}</ul>` : ""}
+    <div class="actions"><button id="again" class="alt">Start again</button></div>`;
+  box.classList.remove("hide");
+  fitGraph();
+  $("#again").onclick = () => { reset(); window.scrollTo({top: 0, behavior: "smooth"}); };
+  box.scrollIntoView({behavior: "smooth", block: "start"});
+}
+
+init();
+</script>
+</body>
+</html>
